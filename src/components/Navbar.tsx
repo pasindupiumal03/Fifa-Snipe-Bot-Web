@@ -33,16 +33,16 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 glass-panel" data-purpose="main-nav">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img src="/32.png" alt="FutSnipe BOT" className="w-8 h-8 object-contain" />
             <span className="text-xl font-bold tracking-tighter uppercase font-mono">
               FutSnipe <span className="text-neonGreen">BOT</span>
             </span>
-          </div>
+          </Link>
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium tracking-widest uppercase">
-            <Link className="hover:text-neonGreen transition-colors" href="#features">Features</Link>
-            <Link className="hover:text-neonGreen transition-colors" href="#comparison">Performance</Link>
-            <Link className="hover:text-neonGreen transition-colors" href="#pricing">Pricing</Link>
+            <Link className="hover:text-neonGreen transition-colors" href="/#features">Features</Link>
+            <Link className="hover:text-neonGreen transition-colors" href="/#comparison">Performance</Link>
+            <Link className="hover:text-neonGreen transition-colors" href="/#pricing">Pricing</Link>
             
             {userName ? (
               <div className="flex items-center gap-4">

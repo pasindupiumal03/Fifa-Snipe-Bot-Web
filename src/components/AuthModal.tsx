@@ -138,6 +138,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [isLoginView, setIsLoginView] = useState(true);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -175,7 +176,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       phone: "",
     };
 
-    if (!formData.name.trim()) {
+    if (!isLoginView && !formData.name.trim()) {
       newErrors.name = "Full Name is required";
       isValid = false;
     }
@@ -191,10 +192,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       isValid = false;
     }
 
-    const phoneRegex = /^[\d\s\-\+]{7,15}$/;
-    if (!formData.phone.trim() || !phoneRegex.test(formData.phone)) {
-      newErrors.phone = "Valid Phone Number is required";
-      isValid = false;
+    if (!isLoginView) {
+      const phoneRegex = /^[\d\s\-\+]{7,15}$/;
+      if (!formData.phone.trim() || !phoneRegex.test(formData.phone)) {
+        newErrors.phone = "Valid Phone Number is required";
+        isValid = false;
+      }
     }
 
     setErrors(newErrors);
@@ -208,17 +211,28 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     if (validateForm()) {
       setIsLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/auth/register", {
+        const endpoint = isLoginView 
+          ? "http://localhost:5000/api/auth/login" 
+          : "http://localhost:5000/api/auth/register";
+
+        const bodyData = isLoginView
+          ? {
+              email: formData.email,
+              password: formData.password,
+            }
+          : {
+              name: formData.name,
+              email: formData.email,
+              password: formData.password,
+              phoneNumber: formData.phone,
+            };
+
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            phoneNumber: formData.phone,
-          }),
+          body: JSON.stringify(bodyData),
         });
 
         const data = await response.json();
@@ -252,11 +266,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             onClose();
           }, 1000);
         } else {
-          setServerError(data.message || "Registration failed. Please try again.");
+          setServerError(data.message || (isLoginView ? "Login failed. Please try again." : "Registration failed. Please try again."));
         }
       } catch (err) {
         setServerError("Network error. Could not connect to the server.");
-        console.error("Registration error:", err);
+        console.error("Auth error:", err);
       } finally {
         setIsLoading(false);
       }
@@ -277,8 +291,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neonGreen to-transparent opacity-50"></div>
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-black text-white leading-tight tracking-tight mb-2 uppercase">Register Now</h1>
-            <p className="text-gray-400 text-sm">Join the elite circle of FUT traders and start sniping today.</p>
+            <h1 className="text-3xl font-black text-white leading-tight tracking-tight mb-2 uppercase">
+              {isLoginView ? "Welcome Back" : "Register Now"}
+            </h1>
+            <p className="text-gray-400 text-sm">
+              {isLoginView ? "Sign in to access your FUT Sniper Pro dashboard." : "Join the elite circle of FUT traders and start sniping today."}
+            </p>
           </div>
           <button 
             onClick={onClose}
@@ -290,21 +308,23 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* Full Name */}
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-300 ml-1">Full Name</label>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-neonGreen/60 text-xl">person</span>
-              <input 
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`w-full bg-[#0A0A0A]/50 border ${errors.name ? 'border-red-500' : 'border-white/10'} rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-neonGreen/50 focus:border-neonGreen transition-all`}
-                placeholder="Enter your name" 
-                type="text"
-              />
+          {!isLoginView && (
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-gray-300 ml-1">Full Name</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-neonGreen/60 text-xl">person</span>
+                <input 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`w-full bg-[#0A0A0A]/50 border ${errors.name ? 'border-red-500' : 'border-white/10'} rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-neonGreen/50 focus:border-neonGreen transition-all`}
+                  placeholder="Enter your name" 
+                  type="text"
+                />
+              </div>
+              {errors.name && <p className="text-red-500 text-xs ml-1">{errors.name}</p>}
             </div>
-            {errors.name && <p className="text-red-500 text-xs ml-1">{errors.name}</p>}
-          </div>
+          )}
           
           {/* Email Address */}
           <div className="space-y-1">
@@ -341,33 +361,35 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           </div>
           
           {/* Phone Number with Auto-Flag */}
-          <div className="space-y-1">
-            <label className="text-sm font-semibold text-gray-300 ml-1">Phone Number</label>
-            <div className="relative">
-              {matchedCountry ? (
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center w-6 h-4 overflow-hidden rounded-[2px] shadow-sm border border-white/10">
-                  <img 
-                    src={`https://flagcdn.com/w40/${matchedCountry.code.toLowerCase()}.png`} 
-                    alt={matchedCountry.name} 
-                    className="w-full h-full object-cover"
-                  />
-                </span>
-              ) : (
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-neonGreen/60 text-xl pointer-events-none">
-                  public
-                </span>
-              )}
-              <input 
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full bg-[#0A0A0A]/50 border ${errors.phone ? 'border-red-500' : 'border-white/10'} rounded-xl py-3.5 pl-[3.25rem] pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-neonGreen/50 focus:border-neonGreen transition-all`}
-                placeholder="+44 1234 567890" 
-                type="tel"
-              />
+          {!isLoginView && (
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-gray-300 ml-1">Phone Number</label>
+              <div className="relative">
+                {matchedCountry ? (
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center w-6 h-4 overflow-hidden rounded-[2px] shadow-sm border border-white/10">
+                    <img 
+                      src={`https://flagcdn.com/w40/${matchedCountry.code.toLowerCase()}.png`} 
+                      alt={matchedCountry.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </span>
+                ) : (
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-neonGreen/60 text-xl pointer-events-none">
+                    public
+                  </span>
+                )}
+                <input 
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full bg-[#0A0A0A]/50 border ${errors.phone ? 'border-red-500' : 'border-white/10'} rounded-xl py-3.5 pl-[3.25rem] pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-neonGreen/50 focus:border-neonGreen transition-all`}
+                  placeholder="+44 1234 567890" 
+                  type="tel"
+                />
+              </div>
+              {errors.phone && <p className="text-red-500 text-xs ml-1">{errors.phone}</p>}
             </div>
-            {errors.phone && <p className="text-red-500 text-xs ml-1">{errors.phone}</p>}
-          </div>
+          )}
           
           <div className="pt-4 space-y-3">
             {serverError && (
@@ -380,18 +402,27 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+              {isLoading ? "PROCESSING..." : (isLoginView ? "SIGN IN" : "CREATE ACCOUNT")}
             </button>
           </div>
           
           <p className="text-center text-xs text-gray-500 mt-4">
-            By registering, you agree to our <a className="text-neonGreen hover:underline" href="#">Terms of Service</a> and <a className="text-neonGreen hover:underline" href="#">Privacy Policy</a>.
+            By registering, you agree to our <a className="text-neonGreen hover:underline" href="/terms" onClick={onClose}>Terms of Service</a> and <a className="text-neonGreen hover:underline" href="/privacy" onClick={onClose}>Privacy Policy</a>.
           </p>
         </form>
         
         <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-center gap-2">
-          <span className="text-gray-400 text-sm">Already have an account?</span>
-          <a className="text-neonGreen font-bold text-sm hover:underline" href="#">Log In</a>
+          {isLoginView ? (
+            <>
+              <span className="text-gray-400 text-sm">Don't have an account?</span>
+              <button type="button" onClick={() => { setIsLoginView(false); setServerError(""); setErrors({name:"", email:"", password:"", phone:""}); }} className="text-neonGreen font-bold text-sm hover:underline">Register</button>
+            </>
+          ) : (
+            <>
+              <span className="text-gray-400 text-sm">Already have an account?</span>
+              <button type="button" onClick={() => { setIsLoginView(true); setServerError(""); setErrors({name:"", email:"", password:"", phone:""}); }} className="text-neonGreen font-bold text-sm hover:underline">Log In</button>
+            </>
+          )}
         </div>
       </div>
     </div>,
