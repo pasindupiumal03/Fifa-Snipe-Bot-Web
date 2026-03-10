@@ -74,3 +74,12 @@ html, body {
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Fix browser autofill changing input backgrounds to white */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
