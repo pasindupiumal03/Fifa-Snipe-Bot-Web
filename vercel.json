@@ -1,6 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm run build",
-  "regions": ["cdg1", "lhr1", "arn1", "dub1"]
+  "buildCommand": "pnpm run build"
 }
