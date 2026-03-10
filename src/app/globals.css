@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
+@theme {
+  --color-neonGreen: #CCFF00;
+  --color-deepCharcoal: #0A0A0A;
+  --color-panelGray: #141414;
+  --color-borderGray: #262626;
+  
+  --font: "Geogrotesque";
+  --font: "Geogrotesque";
+  
+  --shadow-neon: 0 0 15px rgba(204, 255, 0, 0.3);
+  --shadow-neonStrong: 0 0 25px rgba(204, 255, 0, 0.5);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0A0A0A;
+  --foreground: #FFFFFF;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*::-webkit-scrollbar {
+  display: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-body {
-  background: var(--background);
+html, body {
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+
+.neon-border {
+  border: 1px solid #CCFF00;
+}
+
+.neon-text-glow {
+  text-shadow: 0 0 10px rgba(204, 255, 0, 0.6);
+}
+
+.glass-panel {
+  background: rgba(20, 20, 20, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sharp-clip {
+  clip-path: polygon(0 0, 95% 0, 100% 15%, 100% 100%, 5% 100%, 0 85%);
+}
+
+.scanline {
+  width: 100%;
+  height: 2px;
+  background: rgba(204, 255, 0, 0.1);
+  position: absolute;
+  animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+@layer utilities {
+  .antialiased {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
