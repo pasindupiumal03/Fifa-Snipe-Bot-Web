@@ -131,10 +131,13 @@ const countryCodes = [...rawCountryCodes].sort((a, b) => b.dial_code.length - a.
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: (name: string) => void;
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -198,22 +201,65 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError("");
+    
     if (validateForm()) {
-      // Fire confetti animation instead of alert
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#CCFF00', '#FFFFFF', '#0A0A0A'] // Matching brand colors
-      });
+      setIsLoading(true);
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            phoneNumber: formData.phone,
+          }),
+        });
 
-      // Close modal smoothly after a short delay so user sees success state
-      setTimeout(() => {
-        setFormData({ name: "", email: "", password: "", phone: "" }); // Reset form
-        onClose();
-      }, 1000);
+        const data = await response.json();
+
+        if (response.ok) {
+          // Save to local storage
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify({ 
+            name: data.name, 
+            email: data.email,
+            purchases: data.purchases,
+            profits: data.profits 
+          }));
+
+          // Notify parent component
+          if (onSuccess) {
+            onSuccess(data.name);
+          }
+
+          // Fire confetti animation instead of alert
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#CCFF00', '#FFFFFF', '#0A0A0A'] // Matching brand colors
+          });
+
+          // Close modal smoothly after a short delay so user sees success state
+          setTimeout(() => {
+            setFormData({ name: "", email: "", password: "", phone: "" }); // Reset form
+            onClose();
+          }, 1000);
+        } else {
+          setServerError(data.message || "Registration failed. Please try again.");
+        }
+      } catch (err) {
+        setServerError("Network error. Could not connect to the server.");
+        console.error("Registration error:", err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -323,12 +369,18 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {errors.phone && <p className="text-red-500 text-xs ml-1">{errors.phone}</p>}
           </div>
           
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
+            {serverError && (
+              <p className="text-red-500 text-sm text-center bg-red-500/10 py-2 border border-red-500/20 rounded-lg">
+                {serverError}
+              </p>
+            )}
             <button 
-              className="w-full bg-neonGreen hover:brightness-110 active:scale-[0.98] transition-all py-4 rounded-xl text-black font-black uppercase tracking-wider text-sm shadow-neon" 
+              className="w-full bg-neonGreen hover:brightness-110 active:scale-[0.98] transition-all py-4 rounded-xl text-black font-black uppercase tracking-wider text-sm shadow-neon disabled:opacity-50 disabled:cursor-not-allowed" 
               type="submit"
+              disabled={isLoading}
             >
-              Create Account
+              {isLoading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
             </button>
           </div>
           
