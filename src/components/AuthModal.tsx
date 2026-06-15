@@ -212,8 +212,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       setIsLoading(true);
       try {
         const endpoint = isLoginView 
-          ? "http://localhost:5000/api/auth/login" 
-          : "http://localhost:5000/api/auth/register";
+          ? "https://fifa-snipe-bot-backend.vercel.app/api/auth/login" 
+          : "https://fifa-snipe-bot-backend.vercel.app/api/auth/register";
 
         const bodyData = isLoginView
           ? {
